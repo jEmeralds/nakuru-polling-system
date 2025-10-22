@@ -1,0 +1,451 @@
+/* ==================== CONTAINER ==================== */
+.issue-detail-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: white;
+  min-height: 100vh;
+}
+
+/* ==================== BACK BUTTON ==================== */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1.5rem;
+  color: #2196F3;
+  background: transparent;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-link:hover {
+  color: #1976D2;
+  transform: translateX(-4px);
+}
+
+/* ==================== ISSUE HEADER ==================== */
+.issue-header {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.header-top {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.anonymous-badge {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  background: #f5f5f5;
+  color: #666;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.issue-title {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin: 0.5rem 0 1rem 0;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.issue-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ==================== COMPACT STATS BAR ==================== */
+.stats-bar {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.stat-button,
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.stat-button {
+  cursor: pointer;
+}
+
+.stat-button:hover {
+  background: #e3f2fd;
+  border-color: #2196F3;
+  transform: translateY(-2px);
+}
+
+.stat-button.active {
+  background: #2196F3;
+  border-color: #2196F3;
+  color: white;
+}
+
+.stat-icon {
+  font-size: 1.2rem;
+}
+
+.stat-value {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #2c3e50;
+}
+
+.stat-button.active .stat-value {
+  color: white;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #666;
+  display: none;
+}
+
+/* ==================== ISSUE CONTENT ==================== */
+.issue-content {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.issue-content h2 {
+  font-size: 1.2rem;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.issue-description {
+  color: #424242;
+  line-height: 1.8;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* ==================== ADMIN RESPONSE ==================== */
+.admin-response {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #e8f5e9;
+  border-left: 4px solid #4CAF50;
+  border-radius: 8px;
+}
+
+.admin-response h3 {
+  font-size: 1.1rem;
+  color: #2e7d32;
+  margin: 0 0 1rem 0;
+}
+
+.admin-response p {
+  color: #424242;
+  line-height: 1.6;
+  margin: 0 0 0.5rem 0;
+}
+
+.response-date {
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+}
+
+/* ==================== COMMENTS SECTION ==================== */
+.comments-section {
+  margin-top: 3rem;
+}
+
+.comments-section h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* Comment Form */
+.comment-form {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  border: 1px solid #e0e0e0;
+}
+
+.comment-textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.3s;
+  background: white;
+}
+
+.comment-textarea:focus {
+  outline: none;
+  border-color: #2196F3;
+}
+
+.comment-form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.char-count {
+  color: #757575;
+  font-size: 0.85rem;
+}
+
+.submit-comment-btn {
+  padding: 0.7rem 1.8rem;
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.submit-comment-btn:hover:not(:disabled) {
+  background: #1976D2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.submit-comment-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Comments List */
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.loading-comments,
+.no-comments {
+  text-align: center;
+  padding: 2rem;
+  color: #757575;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+/* Individual Comment Card - COMPACT VERSION */
+.comment-item {
+  background: white;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  border-left: 3px solid;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Alternating Colors - More Subtle */
+.comment-item:nth-child(6n + 1) {
+  border-left-color: #2196F3;
+  background: linear-gradient(to right, rgba(33, 150, 243, 0.03) 0%, white 8%);
+}
+
+.comment-item:nth-child(6n + 2) {
+  border-left-color: #4CAF50;
+  background: linear-gradient(to right, rgba(76, 175, 80, 0.03) 0%, white 8%);
+}
+
+.comment-item:nth-child(6n + 3) {
+  border-left-color: #FF9800;
+  background: linear-gradient(to right, rgba(255, 152, 0, 0.03) 0%, white 8%);
+}
+
+.comment-item:nth-child(6n + 4) {
+  border-left-color: #9C27B0;
+  background: linear-gradient(to right, rgba(156, 39, 176, 0.03) 0%, white 8%);
+}
+
+.comment-item:nth-child(6n + 5) {
+  border-left-color: #F44336;
+  background: linear-gradient(to right, rgba(244, 67, 54, 0.03) 0%, white 8%);
+}
+
+.comment-item:nth-child(6n + 6) {
+  border-left-color: #00BCD4;
+  background: linear-gradient(to right, rgba(0, 188, 212, 0.03) 0%, white 8%);
+}
+
+.comment-item:hover {
+  transform: translateX(3px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Comment Header - Compact */
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.comment-author {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.author-icon {
+  font-size: 1rem;
+}
+
+.author-name {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.95rem;
+}
+
+.comment-time {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+/* Comment Body - Compact */
+.comment-body {
+  padding-left: 1.5rem;
+}
+
+.comment-body p {
+  margin: 0;
+  color: #424242;
+  line-height: 1.6;
+  font-size: 0.92rem;
+}
+
+/* ==================== LOADING & ERROR STATES ==================== */
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #2196F3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+@media (max-width: 768px) {
+  .issue-detail-container {
+    padding: 1rem;
+  }
+
+  .issue-title {
+    font-size: 1.5rem;
+  }
+
+  .stats-bar {
+    flex-wrap: wrap;
+  }
+
+  .stat-button,
+  .stat-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .stat-icon {
+    font-size: 1rem;
+  }
+
+  .stat-value {
+    font-size: 1rem;
+  }
+
+  .comment-item {
+    padding: 0.9rem 1rem;
+  }
+
+  .comment-body {
+    padding-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .comment-form {
+    padding: 1rem;
+  }
+}
