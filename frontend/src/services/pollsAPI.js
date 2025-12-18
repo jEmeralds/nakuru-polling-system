@@ -1,109 +1,110 @@
 // =====================================================
 // FILE: frontend/src/services/pollsAPI.js
-// Frontend service for polls API calls
+// COMPLETE VERSION - All functions for existing + admin pages
 // =====================================================
 
 import api from './api';
 
 // =====================================================
-// PUBLIC POLL FUNCTIONS
+// POLL FUNCTIONS
 // =====================================================
 
 /**
- * Get all active polls (public access)
- * @param {Object} filters - Optional filters
- * @returns {Promise} Array of active polls
- */
-export const getActivePolls = async (filters = {}) => {
-  try {
-    const params = new URLSearchParams();
-    if (filters.position_type) params.append('position_type', filters.position_type);
-    if (filters.location_level) params.append('location_level', filters.location_level);
-    
-    const response = await api.get(`/polls/active?${params.toString()}`);
-    return response.data;
-  } catch (error) {
-    console.error('Get active polls error:', error);
-    throw error;
-  }
-};
-
-/**
- * Get all polls with filters (authenticated)
- * @param {Object} filters - Filter options
- * @returns {Promise} Array of polls
+ * Get all polls
  */
 export const getAllPolls = async (filters = {}) => {
   try {
     const params = new URLSearchParams();
     if (filters.status) params.append('status', filters.status);
     if (filters.position_type) params.append('position_type', filters.position_type);
-    if (filters.active_only) params.append('active_only', filters.active_only);
+    if (filters.active_only) params.append('active_only', 'true');
     
-    const response = await api.get(`/polls?${params.toString()}`);
+    const queryString = params.toString();
+    const url = queryString ? `/polls?${queryString}` : '/polls';
+    
+    console.log('📊 Fetching polls:', url);
+    const response = await api.get(url);
+    console.log('✅ Polls fetched:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Get all polls error:', error);
+    console.error('❌ Get polls error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get active polls only
+ */
+export const getActivePolls = async () => {
+  try {
+    const response = await api.get('/polls/active');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Get active polls error:', error);
     throw error;
   }
 };
 
 /**
  * Get single poll by ID
- * @param {String} pollId - Poll UUID
- * @returns {Promise} Poll details with options and results
  */
 export const getPollById = async (pollId) => {
   try {
+    console.log('📊 Fetching poll:', pollId);
     const response = await api.get(`/polls/${pollId}`);
+    console.log('✅ Poll fetched:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Get poll by ID error:', error);
+    console.error('❌ Get poll by ID error:', error);
     throw error;
   }
 };
 
 /**
  * Get poll results
- * @param {String} pollId - Poll UUID
- * @returns {Promise} Poll results with vote counts
  */
 export const getPollResults = async (pollId) => {
   try {
     const response = await api.get(`/polls/${pollId}/results`);
     return response.data;
   } catch (error) {
-    console.error('Get poll results error:', error);
+    console.error('❌ Get poll results error:', error);
     throw error;
   }
 };
 
 /**
- * Cast a vote in a poll
- * @param {String} pollId - Poll UUID
- * @param {String} optionId - Option UUID
- * @returns {Promise} Vote confirmation with results
+ * Cast a vote
  */
-export const castVote = async (pollId, optionId) => {
+export const castVote = async (pollId, candidateId) => {
   try {
+    console.log('🗳️ Casting vote:', { pollId, candidateId });
     const response = await api.post('/polls/vote', {
       pollId,
-      optionId
+      candidateId
     });
+    console.log('✅ Vote cast:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Cast vote error:', error);
-    
-    // Handle specific error cases
-    if (error.response) {
-      if (error.response.status === 400) {
-        throw new Error(error.response.data.error || 'Invalid vote');
-      } else if (error.response.status === 429) {
-        throw new Error('Please wait before voting again');
-      }
-    }
-    
-    throw new Error('Failed to cast vote. Please try again.');
+    console.error('❌ Cast vote error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Check if user can vote (simplified - checks poll details)
+ */
+export const canVote = async (pollId) => {
+  try {
+    // Just get the poll details - has_voted is included
+    const response = await getPollById(pollId);
+    return {
+      success: true,
+      canVote: !response.poll.has_voted && response.poll.status === 'active'
+    };
+  } catch (error) {
+    console.error('❌ Can vote check error:', error);
+    return { success: false, canVote: false };
   }
 };
 
@@ -112,143 +113,105 @@ export const castVote = async (pollId, optionId) => {
 // =====================================================
 
 /**
- * Create a new poll (admin only)
- * @param {Object} pollData - Poll creation data
- * @returns {Promise} Created poll
+ * Create a new poll (Admin only)
  */
 export const createPoll = async (pollData) => {
   try {
+    console.log('📝 Creating poll:', pollData);
     const response = await api.post('/polls', pollData);
+    console.log('✅ Poll created:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Create poll error:', error);
+    console.error('❌ Create poll error:', error);
     throw error;
   }
 };
 
 /**
- * Update poll status (admin only)
- * @param {String} pollId - Poll UUID
- * @param {String} status - New status (draft/active/closed/cancelled)
- * @returns {Promise} Updated poll
+ * Update poll status (Admin only)
  */
 export const updatePollStatus = async (pollId, status) => {
   try {
+    console.log('📝 Updating poll status:', pollId, status);
     const response = await api.patch(`/polls/${pollId}/status`, { status });
+    console.log('✅ Poll status updated:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Update poll status error:', error);
+    console.error('❌ Update poll status error:', error);
     throw error;
   }
 };
 
 /**
- * Delete a poll (admin only)
- * @param {String} pollId - Poll UUID
- * @returns {Promise} Success confirmation
+ * Delete a poll (Admin only)
  */
 export const deletePoll = async (pollId) => {
   try {
+    console.log('🗑️ Deleting poll:', pollId);
     const response = await api.delete(`/polls/${pollId}`);
+    console.log('✅ Poll deleted:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Delete poll error:', error);
+    console.error('❌ Delete poll error:', error);
     throw error;
   }
 };
 
+// =====================================================
+// CANDIDATE FUNCTIONS
+// =====================================================
+
 /**
- * Get fraud alerts (admin only)
- * @param {Object} filters - Filter options
- * @returns {Promise} Array of fraud alerts
+ * Get candidates for a specific poll
  */
-export const getFraudAlerts = async (filters = {}) => {
+export const getCandidatesByPoll = async (pollId) => {
   try {
-    const params = new URLSearchParams();
-    if (filters.pollId) params.append('pollId', filters.pollId);
-    if (filters.severity) params.append('severity', filters.severity);
-    if (filters.status) params.append('status', filters.status);
-    
-    const response = await api.get(`/polls/admin/fraud-alerts?${params.toString()}`);
+    console.log('👥 Fetching candidates for poll:', pollId);
+    const response = await api.get(`/candidates?poll_id=${pollId}`);
+    console.log('✅ Candidates fetched:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Get fraud alerts error:', error);
+    console.error('❌ Get candidates by poll error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create a new candidate (Admin only)
+ */
+export const createCandidate = async (candidateData) => {
+  try {
+    console.log('👤 Creating candidate:', candidateData);
+    const response = await api.post('/candidates', candidateData);
+    console.log('✅ Candidate created:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Create candidate error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a candidate (Admin only)
+ */
+export const deleteCandidate = async (candidateId) => {
+  try {
+    console.log('🗑️ Deleting candidate:', candidateId);
+    const response = await api.delete(`/candidates/${candidateId}`);
+    console.log('✅ Candidate deleted:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Delete candidate error:', error);
     throw error;
   }
 };
 
 // =====================================================
-// HELPER FUNCTIONS
+// UTILITY FUNCTIONS (Required by Polls.js and PollDetail.js)
 // =====================================================
 
 /**
- * Format poll for display
- * @param {Object} poll - Raw poll data
- * @returns {Object} Formatted poll
- */
-export const formatPoll = (poll) => {
-  return {
-    ...poll,
-    start_date: new Date(poll.start_date),
-    end_date: new Date(poll.end_date),
-    is_active: poll.status === 'active' && 
-               new Date() >= new Date(poll.start_date) && 
-               new Date() <= new Date(poll.end_date),
-    time_remaining: getTimeRemaining(poll.end_date),
-    participation_rate: poll.total_votes > 0 ? 
-      ((poll.total_votes / 1000) * 100).toFixed(1) : 0 // Assuming 1000 potential voters
-  };
-};
-
-/**
- * Calculate time remaining for a poll
- * @param {String} endDate - Poll end date
- * @returns {Object} Time remaining object
- */
-export const getTimeRemaining = (endDate) => {
-  const now = new Date();
-  const end = new Date(endDate);
-  const diff = end - now;
-  
-  if (diff <= 0) {
-    return { expired: true, text: 'Poll closed' };
-  }
-  
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  
-  if (days > 0) {
-    return { expired: false, text: `${days} day${days > 1 ? 's' : ''} remaining` };
-  } else if (hours > 0) {
-    return { expired: false, text: `${hours} hour${hours > 1 ? 's' : ''} remaining` };
-  } else {
-    return { expired: false, text: `${minutes} minute${minutes > 1 ? 's' : ''} remaining` };
-  }
-};
-
-/**
- * Get position type label
- * @param {String} positionType - Position type code
- * @returns {String} Formatted label
- */
-export const getPositionLabel = (positionType) => {
-  const labels = {
-    president: 'President',
-    governor: 'Governor',
-    senator: 'Senator',
-    mp: 'Member of Parliament',
-    woman_rep: 'Woman Representative',
-    mca: 'Member of County Assembly',
-    other: 'Other'
-  };
-  return labels[positionType] || positionType;
-};
-
-/**
- * Get status badge color
- * @param {String} status - Poll status
- * @returns {String} CSS color class
+ * Get status color
  */
 export const getStatusColor = (status) => {
   const colors = {
@@ -261,67 +224,86 @@ export const getStatusColor = (status) => {
 };
 
 /**
- * Check if user can vote in poll
- * @param {Object} poll - Poll object
- * @param {Object} user - User object
- * @returns {Object} Can vote result with reason
+ * Get position label
  */
-export const canVote = (poll, user) => {
-  // Check if poll is active
-  if (poll.status !== 'active') {
-    return { canVote: false, reason: 'Poll is not active' };
-  }
-  
-  // Check if poll has started
-  if (new Date() < new Date(poll.start_date)) {
-    return { canVote: false, reason: 'Poll has not started yet' };
-  }
-  
-  // Check if poll has ended
-  if (new Date() > new Date(poll.end_date)) {
-    return { canVote: false, reason: 'Poll has ended' };
-  }
-  
-  // Check if user has already voted
-  if (poll.has_voted) {
-    return { canVote: false, reason: 'You have already voted' };
-  }
-  
-  // Check location verification if required
-  if (poll.require_location_verification && poll.target_location) {
-    const targetLevel = poll.target_location.level;
-    
-    if (targetLevel === 'county' && user.county !== poll.target_location.county_name) {
-      return { canVote: false, reason: 'This poll is not available in your county' };
-    }
-    
-    if (targetLevel === 'constituency' && user.constituency !== poll.target_location.constituency_name) {
-      return { canVote: false, reason: 'This poll is not available in your constituency' };
-    }
-  }
-  
-  return { canVote: true, reason: null };
+export const getPositionLabel = (positionType) => {
+  const labels = {
+    president: 'President',
+    governor: 'Governor',
+    senator: 'Senator',
+    mp: 'Member of Parliament',
+    woman_rep: 'Woman Representative',
+    mca: 'Member of County Assembly'
+  };
+  return labels[positionType] || positionType;
 };
 
-// Export all functions
-export default {
-  // Public functions
-  getActivePolls,
+/**
+ * Calculate time remaining
+ */
+export const getTimeRemaining = (endDate) => {
+  const now = new Date();
+  const end = new Date(endDate);
+  const diff = end - now;
+  
+  if (diff <= 0) return 'Ended';
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''} remaining`;
+  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} remaining`;
+  if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} remaining`;
+  return 'Less than 1 minute remaining';
+};
+
+/**
+ * Format poll for display
+ */
+export const formatPoll = (poll) => {
+  if (!poll) return null;
+  
+  return {
+    ...poll,
+    start_date: new Date(poll.start_date),
+    end_date: new Date(poll.end_date),
+    is_active: poll.status === 'active',
+    is_closed: poll.status === 'closed',
+    time_remaining: getTimeRemaining(poll.end_date),
+    position_label: getPositionLabel(poll.position_type),
+    status_color: getStatusColor(poll.status)
+  };
+};
+
+// =====================================================
+// EXPORT AS OBJECT
+// =====================================================
+
+export const pollsAPI = {
+  // Poll functions
   getAllPolls,
+  getActivePolls,
   getPollById,
   getPollResults,
   castVote,
+  canVote,
   
-  // Admin functions
+  // Admin poll functions
   createPoll,
   updatePollStatus,
   deletePoll,
-  getFraudAlerts,
   
-  // Helper functions
-  formatPoll,
-  getTimeRemaining,
-  getPositionLabel,
+  // Candidate functions
+  getCandidatesByPoll,
+  createCandidate,
+  deleteCandidate,
+  
+  // Utility functions
   getStatusColor,
-  canVote
+  getPositionLabel,
+  getTimeRemaining,
+  formatPoll
 };
+
+export default pollsAPI;

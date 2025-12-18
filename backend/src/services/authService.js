@@ -1,23 +1,23 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const { supabase } = require('../config/database')
+const supabase = require('../config/database')  // ✅ FIXED - Removed { }
 const authConfig = require('../config/auth')
 
 class AuthService {
-  
+
   /**
    * Generate JWT token for user
    */
   generateToken(userId, role = 'voter') {
     return jwt.sign(
-      { 
-        userId, 
+      {
+        userId,
         role,
         timestamp: Date.now()
       },
       authConfig.jwtSecret,
-      { 
-        expiresIn: authConfig.jwtExpiresIn 
+      {
+        expiresIn: authConfig.jwtExpiresIn
       }
     )
   }
@@ -70,12 +70,12 @@ class AuthService {
     let { data: user, error } = await supabase
       .from('users')
       .select(`
-        id, 
-        phone_number, 
-        email, 
-        password_hash, 
-        full_name, 
-        role, 
+        id,
+        phone_number,
+        email,
+        password_hash,
+        full_name,
+        role,
         status,
         phone_verified,
         email_verified,
@@ -91,12 +91,12 @@ class AuthService {
       const { data: emailUser, error: emailError } = await supabase
         .from('users')
         .select(`
-          id, 
-          phone_number, 
-          email, 
-          password_hash, 
-          full_name, 
-          role, 
+          id,
+          phone_number,
+          email,
+          password_hash,
+          full_name,
+          role,
           status,
           phone_verified,
           email_verified,
@@ -171,8 +171,8 @@ class AuthService {
 
       // Find location IDs
       const { data: locationData, error: locationError } = await this.findLocationByNames(
-        countyName, 
-        constituencyName, 
+        countyName,
+        constituencyName,
         wardName
       )
 
@@ -205,10 +205,10 @@ class AuthService {
         })
         .select(`
           id, 
-          phone_number, 
-          email, 
-          full_name, 
-          role, 
+          phone_number,
+          email,
+          full_name,
+          role,
           status,
           created_at
         `)
@@ -327,11 +327,11 @@ class AuthService {
       const { data: user, error } = await supabase
         .from('users')
         .select(`
-          id, 
-          phone_number, 
-          email, 
-          full_name, 
-          role, 
+          id,
+          phone_number,
+          email,
+          full_name,
+          role,
           status,
           phone_verified,
           email_verified

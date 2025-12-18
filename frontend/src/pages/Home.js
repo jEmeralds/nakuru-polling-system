@@ -14,20 +14,41 @@ const Home = () => {
         <p className="hero-subtitle">
           Your Voice Matters in Shaping Nakuru County's Future
         </p>
-        <p className="hero-description">
-          Participate in polls for Governor, Senator, MP, Woman Rep, and MCA positions.
-          Make informed decisions and track real-time results.
-        </p>
-        
-        <div className="hero-buttons">
-          {isAuthenticated ? (
-            <button 
-              onClick={() => navigate('/dashboard')} 
-              className="hero-btn primary"
-            >
-              Go to Dashboard →
-            </button>
-          ) : (
+
+        {/* Motivational CTA Section */}
+        <div className="cta-box">
+          <div className="cta-badge">🌟 Make Your Voice Heard</div>
+          <h2 className="cta-title">Every Vote Counts</h2>
+          <p className="cta-description">
+            Join <strong>thousands of Nakuru residents</strong> actively shaping our county's future.
+            Your opinion matters in deciding our next leaders.
+          </p>
+          
+          <div className="quick-info">
+            <div className="info-item">
+              <span className="info-icon">🗳️</span>
+              <span className="info-text">5 Positions Available</span>
+            </div>
+            <div className="info-item">
+              <span className="info-icon">⏰</span>
+              <span className="info-text">Polls Active Now</span>
+            </div>
+            <div className="info-item">
+              <span className="info-icon">👥</span>
+              <span className="info-text">12K+ Participants</span>
+            </div>
+          </div>
+
+          <button 
+            onClick={() => navigate('/polls')} 
+            className="view-polls-btn"
+          >
+            View Active Polls →
+          </button>
+        </div>
+
+        <div className="hero-actions">
+          {!isAuthenticated && (
             <>
               <button 
                 onClick={() => navigate('/register')} 
@@ -44,6 +65,11 @@ const Home = () => {
             </>
           )}
         </div>
+
+        <p className="hero-description">
+          Participate in polls for Governor, Senator, MP, Woman Rep, and MCA positions.
+          Make informed decisions and track real-time results.
+        </p>
       </div>
 
       <div className="features-section">

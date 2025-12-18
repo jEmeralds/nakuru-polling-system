@@ -1,5 +1,5 @@
 // backend/src/controllers/issuesController.js
-const { supabase } = require('../config/database');
+const supabase = require('../config/database'); // ✅ FIXED - Removed { }
 
 // Get all categories
 exports.getCategories = async (req, res) => {
@@ -90,7 +90,6 @@ exports.getIssueById = async (req, res) => {
   }
 };
 
-// Get comments for an issue
 // Get comments for an issue
 exports.getComments = async (req, res) => {
   try {
@@ -271,6 +270,7 @@ exports.addComment = async (req, res) => {
     res.status(500).json({ error: 'Failed to add comment' });
   }
 };
+
 // Increment view count for issue
 exports.incrementView = async (req, res) => {
   try {

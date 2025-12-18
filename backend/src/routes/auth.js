@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const { supabase } = require('../config/database')
+const supabase = require('../config/database')  // ✅ FIXED - Removed { }
 const { authenticateToken, requireAdmin } = require('../middleware/auth')
 
 // ============================================

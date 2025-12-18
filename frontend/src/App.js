@@ -1,7 +1,11 @@
+// =====================================================
+// FILE: frontend/src/App.js
+// UPDATED - Added Profile and UserManagement routes
+// =====================================================
+
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
-
 // Layout Components
 import Header from './components/common/Header'
 import Footer from './components/common/Footer'
@@ -13,14 +17,17 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Polls from './pages/Polls'
-import PollDetail from './pages/PollDetail'
+import { PollDetail } from './pages/Polls'
 import Issues from './pages/Issues'
 import IssueDetail from './pages/IssueDetail'
 import SubmitIssue from './pages/SubmitIssue'
+import Profile from './pages/Profile'
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminIssues from './pages/admin/AdminIssues'
+import AdminPolls from './pages/admin/AdminPolls'
+import UserManagement from './pages/UserManagement'
 
 // CSS
 import './App.css'
@@ -44,6 +51,15 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <Profile />
                   </ProtectedRoute>
                 } 
               />
@@ -104,10 +120,37 @@ function App() {
               />
 
               <Route 
+                path="/admin/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+
+              <Route 
                 path="/admin/issues" 
                 element={
                   <ProtectedRoute>
                     <AdminIssues />
+                  </ProtectedRoute>
+                } 
+              />
+
+              <Route 
+                path="/admin/polls" 
+                element={
+                  <ProtectedRoute>
+                    <AdminPolls />
+                  </ProtectedRoute>
+                } 
+              />
+
+              <Route 
+                path="/admin/users" 
+                element={
+                  <ProtectedRoute>
+                    <UserManagement />
                   </ProtectedRoute>
                 } 
               />

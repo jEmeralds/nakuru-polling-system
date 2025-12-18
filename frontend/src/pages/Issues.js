@@ -54,7 +54,7 @@ const Issues = () => {
     
     const data = await issuesAPI.getIssues(filters);
     console.log('✅ Issues fetched:', data);
-    setIssues(data.issues || []);  // ← CHANGE THIS LINE
+    setIssues(data.issues || []);
     setError(null);
   } catch (err) {
     console.error('❌ Error fetching issues:', err);
@@ -116,9 +116,10 @@ const Issues = () => {
             <h1>📝 Community Issues & Feedback</h1>
             <p>Report issues, track progress, and make Nakuru better together</p>
           </div>
+          {/* ✅ FIXED: Changed from /issues/submit to /submit-issue */}
           <button 
             className="submit-issue-btn"
-            onClick={() => navigate('/issues/submit')}
+            onClick={() => navigate('/submit-issue')}
           >
             ➕ Submit New Issue
           </button>
@@ -243,9 +244,10 @@ const Issues = () => {
                 ? 'Try adjusting your filters or search query'
                 : 'Be the first to report an issue in your community!'}
             </p>
+            {/* ✅ FIXED: Changed from /issues/submit to /submit-issue */}
             <button 
               className="submit-issue-btn"
-              onClick={() => navigate('/issues/submit')}
+              onClick={() => navigate('/submit-issue')}
             >
               ➕ Submit First Issue
             </button>

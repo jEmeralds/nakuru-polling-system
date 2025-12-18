@@ -1,289 +1,475 @@
 // =====================================================
 // FILE: frontend/src/pages/Polls.js
-// Polls listing page with filters
+// Fixed: Proper poll status determination based on dates
 // =====================================================
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getAllPolls, getPositionLabel, getStatusColor, getTimeRemaining } from '../services/pollsAPI';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import './Polls.css';
 
+// =====================================================
+// HELPER: Determine if poll is actually active
+// =====================================================
+const isPollActive = (poll) => {
+  const now = new Date();
+  const startDate = new Date(poll.start_date);
+  const endDate = new Date(poll.end_date);
+  
+  // Poll is active if:
+  // 1. Database status is 'active'
+  // 2. Current date is between start and end dates
+  return poll.status === 'active' && now >= startDate && now <= endDate;
+};
+
+const isPollClosed = (poll) => {
+  const now = new Date();
+  const endDate = new Date(poll.end_date);
+  
+  // Poll is closed if:
+  // 1. Database status is 'closed', OR
+  // 2. End date has passed
+  return poll.status === 'closed' || now > endDate;
+};
+
+// =====================================================
+// POLLS LISTING - Active and Past Polls
+// =====================================================
+
 const Polls = () => {
-  const navigate = useNavigate();
-  
-  // State management
-  const [polls, setPolls] = useState([]);
-  const [filteredPolls, setFilteredPolls] = useState([]);
+  const [activePolls, setActivePolls] = useState([]);
+  const [pastPolls, setPastPolls] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  // Filter states
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [positionFilter, setPositionFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // Position types for filter
-  const positionTypes = [
-    { value: 'all', label: 'All Positions' },
-    { value: 'president', label: '🇰🇪 President', icon: '🇰🇪' },
-    { value: 'governor', label: '🏛️ Governor', icon: '🏛️' },
-    { value: 'senator', label: '⚖️ Senator', icon: '⚖️' },
-    { value: 'mp', label: '📋 MP', icon: '📋' },
-    { value: 'woman_rep', label: '👩 Woman Rep', icon: '👩' },
-    { value: 'mca', label: '🏘️ MCA', icon: '🏘️' }
-  ];
-  
-  // Status options
-  const statusOptions = [
-    { value: 'all', label: 'All Status' },
-    { value: 'active', label: 'Active', color: '#28a745' },
-    { value: 'closed', label: 'Closed', color: '#dc3545' },
-    { value: 'draft', label: 'Draft', color: '#6c757d' }
-  ];
-  
-  // Fetch polls on component mount
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+
   useEffect(() => {
     fetchPolls();
   }, []);
-  
-  // Apply filters when polls or filter criteria change
-  useEffect(() => {
-    applyFilters();
-  }, [polls, statusFilter, positionFilter, searchQuery]);
-  
+
   const fetchPolls = async () => {
     try {
       setLoading(true);
-      const data = await getAllPolls();
-      setPolls(data.polls || []);
-      setError(null);
+      
+      // Fetch ALL polls (we'll filter by date on frontend)
+      const response = await api.get('/polls');
+      const allPolls = response.data || [];
+      
+      console.log('📋 All polls fetched:', allPolls);
+      
+      // Separate into active and past based on ACTUAL dates
+      const active = [];
+      const past = [];
+      
+      allPolls.forEach(poll => {
+        const isActive = isPollActive(poll);
+        const isClosed = isPollClosed(poll);
+        
+        console.log(`Poll "${poll.title}":`, {
+          status: poll.status,
+          end_date: poll.end_date,
+          isActive,
+          isClosed,
+          classification: isActive ? 'ACTIVE' : isClosed ? 'PAST' : 'DRAFT'
+        });
+        
+        if (isActive) {
+          active.push(poll);
+        } else if (isClosed) {
+          past.push(poll);
+        } else if (poll.status === 'draft' && isAdmin) {
+          // Admins can see draft polls in active section
+          active.push(poll);
+        }
+      });
+      
+      setActivePolls(active);
+      setPastPolls(past);
+      
+      console.log('✅ Active polls loaded:', active.length);
+      console.log('✅ Past polls loaded:', past.length);
+      console.log('📊 Active polls:', active.map(p => p.title));
+      console.log('📊 Past polls:', past.map(p => p.title));
     } catch (err) {
-      console.error('Failed to fetch polls:', err);
-      setError('Failed to load polls. Please try again.');
+      console.error('❌ Error loading polls:', err);
     } finally {
       setLoading(false);
     }
   };
-  
-  const applyFilters = () => {
-    let filtered = [...polls];
-    
-    // Filter by status
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(poll => poll.status === statusFilter);
-    }
-    
-    // Filter by position
-    if (positionFilter !== 'all') {
-      filtered = filtered.filter(poll => poll.position_type === positionFilter);
-    }
-    
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(poll =>
-        poll.title.toLowerCase().includes(query) ||
-        poll.description?.toLowerCase().includes(query)
-      );
-    }
-    
-    setFilteredPolls(filtered);
-  };
-  
-  const handlePollClick = (pollId) => {
-    navigate(`/polls/${pollId}`);
-  };
-  
-  const getPollCardClass = (poll) => {
-    const now = new Date();
-    const endDate = new Date(poll.end_date);
-    
-    if (poll.status === 'active' && now < endDate) {
-      return 'poll-card active';
-    } else if (poll.status === 'closed' || now > endDate) {
-      return 'poll-card closed';
-    } else {
-      return 'poll-card draft';
-    }
-  };
-  
-  return (
-    <div className="polls-container">
-      {/* Header */}
-      <div className="polls-header">
-        <h1>🗳️ Election Polls</h1>
-        <p>Participate in opinion polls for upcoming elections</p>
-      </div>
-      
-      {/* Filters Section */}
-      <div className="polls-filters">
-        {/* Search Bar */}
-        <div className="search-bar">
-          <span className="search-icon">🔍</span>
-          <input
-            type="text"
-            placeholder="Search polls..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
-        </div>
-        
-        {/* Position Filter Buttons */}
-        <div className="position-filters">
-          {positionTypes.map(position => (
-            <button
-              key={position.value}
-              onClick={() => setPositionFilter(position.value)}
-              className={`filter-btn ${positionFilter === position.value ? 'active' : ''}`}
-            >
-              {position.icon && <span className="filter-icon">{position.icon}</span>}
-              {position.label}
-            </button>
-          ))}
-        </div>
-        
-        {/* Status Filter Buttons */}
-        <div className="status-filters">
-          {statusOptions.map(status => (
-            <button
-              key={status.value}
-              onClick={() => setStatusFilter(status.value)}
-              className={`status-btn ${statusFilter === status.value ? 'active' : ''}`}
-              style={{
-                borderColor: statusFilter === status.value ? status.color : '#ddd'
-              }}
-            >
-              {status.label}
-              {statusFilter === status.value && <span className="check-mark">✓</span>}
-            </button>
-          ))}
-        </div>
-      </div>
-      
-      {/* Results Count */}
-      <div className="results-info">
-        <p>
-          Showing <strong>{filteredPolls.length}</strong> poll{filteredPolls.length !== 1 ? 's' : ''}
-          {searchQuery && ` matching "${searchQuery}"`}
-        </p>
-      </div>
-      
-      {/* Loading State */}
-      {loading && (
-        <div className="loading-state">
+
+  if (loading) {
+    return (
+      <div className="polls-page">
+        <div className="loading-container">
           <div className="spinner"></div>
           <p>Loading polls...</p>
         </div>
-      )}
-      
-      {/* Error State */}
-      {error && (
-        <div className="error-state">
-          <p className="error-message">⚠️ {error}</p>
-          <button onClick={fetchPolls} className="retry-btn">
-            Try Again
-          </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="polls-page">
+      {/* Active Polls Section */}
+      <div className="polls-section">
+        <div className="section-header">
+          <h1>🗳️ Active Polls</h1>
+          <p>Vote on your favorite candidates and see live results</p>
+        </div>
+
+        {activePolls.length === 0 ? (
+          <div className="empty-polls">
+            <div className="empty-icon">📊</div>
+            <h3>No Active Polls</h3>
+            <p>Check back soon for new popularity polls!</p>
+          </div>
+        ) : (
+          <div className="polls-grid">
+            {activePolls.map((poll) => {
+              const isActive = isPollActive(poll);
+              const isDraft = poll.status === 'draft';
+              
+              return (
+                <div 
+                  key={poll.id} 
+                  className="poll-card active-poll" 
+                  onClick={() => navigate(`/polls/${poll.id}`)}
+                >
+                  <div className={`poll-badge ${isDraft ? 'draft' : 'active'}`}>
+                    {isDraft ? '📝 DRAFT' : '🔴 LIVE'}
+                  </div>
+                  <h3>{poll.title}</h3>
+                  <p className="poll-description">{poll.description}</p>
+                  
+                  <div className="poll-stats">
+                    <span className="stat">
+                      <span className="stat-icon">📍</span>
+                      {poll.poll_type}
+                    </span>
+                    <span className="stat">
+                      <span className="stat-icon">🗳️</span>
+                      {poll.total_votes || 0} votes
+                    </span>
+                    <span className="stat">
+                      <span className="stat-icon">👥</span>
+                      {poll.candidates?.length || 0} candidates
+                    </span>
+                  </div>
+
+                  <div className="poll-dates">
+                    <span>⏰ Ends {new Date(poll.end_date).toLocaleDateString()}</span>
+                  </div>
+
+                  <button className="poll-action-btn primary">
+                    {isAdmin ? 'View Results →' : 'Vote Now →'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Past Polls Section */}
+      {pastPolls.length > 0 && (
+        <div className="polls-section past-section">
+          <div className="section-header">
+            <h2>📊 Past Polls</h2>
+            <p>View results from completed polls</p>
+          </div>
+
+          <div className="polls-grid">
+            {pastPolls.map((poll) => (
+              <div 
+                key={poll.id} 
+                className="poll-card past-poll" 
+                onClick={() => navigate(`/polls/${poll.id}`)}
+              >
+                <div className="poll-badge closed">✅ CLOSED</div>
+                <h3>{poll.title}</h3>
+                <p className="poll-description">{poll.description}</p>
+                
+                <div className="poll-stats">
+                  <span className="stat">
+                    <span className="stat-icon">📍</span>
+                    {poll.poll_type}
+                  </span>
+                  <span className="stat">
+                    <span className="stat-icon">🗳️</span>
+                    {poll.total_votes || 0} votes
+                  </span>
+                  <span className="stat">
+                    <span className="stat-icon">👥</span>
+                    {poll.candidates?.length || 0} candidates
+                  </span>
+                </div>
+
+                <div className="poll-dates">
+                  <span>🏁 Ended {new Date(poll.end_date).toLocaleDateString()}</span>
+                </div>
+
+                <button className="poll-action-btn secondary">
+                  View Results →
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
+    </div>
+  );
+};
+
+// =====================================================
+// POLL DETAIL & VOTING - With Proper Status Checks
+// =====================================================
+
+export const PollDetail = () => {
+  const { id } = useParams();
+  const { user } = useAuth();
+  const [poll, setPoll] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [voting, setVoting] = useState(false);
+  const navigate = useNavigate();
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+
+  useEffect(() => {
+    const loadPoll = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/polls/${id}`);
+        setPoll(response.data);
+        console.log('✅ Poll detail loaded:', response.data);
+      } catch (err) {
+        console.error('❌ Error loading poll:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadPoll();
+  }, [id]);
+
+  const handleVote = async () => {
+    // Check if poll is actually still active
+    if (!isPollActive(poll)) {
+      alert('❌ This poll has ended. Voting is no longer allowed.');
+      return;
+    }
+
+    if (!selectedCandidate) {
+      alert('Please select a candidate');
+      return;
+    }
+
+    if (!window.confirm('Confirm your vote? This cannot be changed.')) return;
+
+    setVoting(true);
+    try {
+      await api.post(`/polls/${id}/vote`, {
+        pollId: id,
+        candidateId: selectedCandidate
+      });
+      alert('✅ Vote submitted successfully!');
       
-      {/* Polls Grid */}
-      {!loading && !error && (
-        <>
-          {filteredPolls.length > 0 ? (
-            <div className="polls-grid">
-              {filteredPolls.map(poll => {
-                const timeRemaining = getTimeRemaining(poll.end_date);
-                const positionLabel = getPositionLabel(poll.position_type);
-                
+      // Refresh poll data
+      const response = await api.get(`/polls/${id}`);
+      setPoll(response.data);
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || 'Failed to vote';
+      alert('❌ ' + errorMsg);
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="poll-detail-page">
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Loading poll...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!poll) {
+    return (
+      <div className="poll-detail-page">
+        <button className="back-button" onClick={() => navigate('/polls')}>
+          ← Back to Polls
+        </button>
+        <div className="error-state">
+          <h2>❌ Poll not found</h2>
+          <p>This poll may have been deleted or the link is incorrect.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Determine actual poll status based on dates
+  const isActive = isPollActive(poll);
+  const isClosed = isPollClosed(poll);
+  const isDraft = poll.status === 'draft';
+  
+  let pollStatus = 'DRAFT';
+  let statusColor = '#ffc107';
+  
+  if (isActive) {
+    pollStatus = 'LIVE';
+    statusColor = '#28a745';
+  } else if (isClosed) {
+    pollStatus = 'CLOSED';
+    statusColor = '#6c757d';
+  }
+
+  // Determine if user can vote
+  // Users can vote if: not admin, poll is active, haven't voted yet, and not a draft
+  const canVote = !isAdmin && isActive && !poll?.has_voted && !isDraft;
+  
+  // Users should ALWAYS be able to see results (live updates)
+  // We'll show voting interface AND results side by side for active polls
+  const showVotingInterface = canVote;
+  const showResults = true; // Always show results
+
+  return (
+    <div className="poll-detail-page">
+      <button className="back-button" onClick={() => navigate('/polls')}>
+        ← Back to Polls
+      </button>
+      
+      <div className="poll-detail-header">
+        <div className="poll-status-badge" style={{ backgroundColor: statusColor }}>
+          {pollStatus}
+        </div>
+        <h1>{poll.title}</h1>
+        <p>{poll.description}</p>
+        <div className="poll-stats-header">
+          <span className="stat-badge">📍 {poll.poll_type}</span>
+          <span className="stat-badge">🗳️ {poll.total_votes || 0} votes</span>
+          <span className="stat-badge">👥 {poll.candidates?.length || 0} candidates</span>
+          {isActive && (
+            <span className="stat-badge">⏰ Ends {new Date(poll.end_date).toLocaleDateString()}</span>
+          )}
+          {isClosed && (
+            <span className="stat-badge">🏁 Ended {new Date(poll.end_date).toLocaleDateString()}</span>
+          )}
+        </div>
+
+        {/* Admin Notice */}
+        {isAdmin && (
+          <div className="admin-notice">
+            👑 <strong>Admin View:</strong> You can view results but cannot vote
+          </div>
+        )}
+
+        {/* Poll Closed Notice */}
+        {isClosed && !isAdmin && (
+          <div className="closed-notice">
+            🏁 <strong>This poll has ended.</strong> Voting is no longer allowed.
+          </div>
+        )}
+
+        {/* Already Voted Notice */}
+        {poll.has_voted && !isAdmin && isActive && (
+          <div className="voted-notice">
+            ✅ <strong>You have already voted in this poll.</strong>
+          </div>
+        )}
+      </div>
+
+      {/* Voting Section - For users who can vote */}
+      {showVotingInterface && (
+        <div className="voting-section">
+          <h2>🗳️ Cast Your Vote</h2>
+          <div className="candidates-grid">
+            {poll.candidates?.map((candidate) => (
+              <div
+                key={candidate.id}
+                className={`candidate-card ${selectedCandidate === candidate.id ? 'selected' : ''}`}
+                onClick={() => setSelectedCandidate(candidate.id)}
+              >
+                <div className="candidate-avatar">
+                  {candidate.profile_image_url ? (
+                    <img src={candidate.profile_image_url} alt={candidate.name} />
+                  ) : (
+                    <div className="avatar-placeholder">👤</div>
+                  )}
+                </div>
+                <h3>{candidate.name}</h3>
+                <p className="candidate-party">{candidate.party?.abbreviation || 'Independent'}</p>
+                {candidate.campaign_slogan && (
+                  <p className="candidate-slogan">"{candidate.campaign_slogan}"</p>
+                )}
+                {candidate.bio && (
+                  <p className="candidate-bio">{candidate.bio}</p>
+                )}
+                <div className="select-indicator">
+                  {selectedCandidate === candidate.id && '✓ Selected'}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="vote-action">
+            <button
+              className="submit-vote-btn"
+              onClick={handleVote}
+              disabled={!selectedCandidate || voting}
+            >
+              {voting ? 'Submitting...' : '🗳️ Submit Vote'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Results Section - Always shown to everyone */}
+      {showResults && (
+        <div className="results-section">
+          <h2>📊 {showVotingInterface ? 'Live Results' : 'Poll Results'}</h2>
+
+          <div className="results-list">
+            {poll.candidates
+              ?.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
+              .map((candidate, index) => {
+                const voteCount = candidate.vote_count || 0;
+                const percentage = poll.total_votes > 0 
+                  ? ((voteCount / poll.total_votes) * 100).toFixed(1)
+                  : 0;
+
                 return (
-                  <div
-                    key={poll.id}
-                    className={getPollCardClass(poll)}
-                    onClick={() => handlePollClick(poll.id)}
-                  >
-                    {/* Status Badge */}
-                    <div className="poll-status-badge" style={{ backgroundColor: getStatusColor(poll.status) }}>
-                      {poll.status.toUpperCase()}
-                    </div>
-                    
-                    {/* Poll Header */}
-                    <div className="poll-card-header">
-                      <h3>{poll.title}</h3>
-                      <p className="poll-position">{positionLabel}</p>
-                    </div>
-                    
-                    {/* Poll Description */}
-                    {poll.description && (
-                      <p className="poll-description">
-                        {poll.description.length > 150
-                          ? `${poll.description.substring(0, 150)}...`
-                          : poll.description}
-                      </p>
-                    )}
-                    
-                    {/* Poll Stats */}
-                    <div className="poll-stats">
-                      <div className="stat">
-                        <span className="stat-icon">👥</span>
-                        <span className="stat-value">{poll.total_votes || 0}</span>
-                        <span className="stat-label">Votes</span>
+                  <div key={candidate.id} className={`result-item ${index === 0 && poll.total_votes > 0 ? 'leading' : ''}`}>
+                    <div className="result-header">
+                      <div className="result-info">
+                        {index === 0 && poll.total_votes > 0 && <span className="crown">👑</span>}
+                        <h3>{candidate.name}</h3>
+                        <span className="result-party">{candidate.party?.abbreviation || 'IND'}</span>
                       </div>
-                      
-                      <div className="stat">
-                        <span className="stat-icon">📊</span>
-                        <span className="stat-value">{poll.poll_options?.length || 0}</span>
-                        <span className="stat-label">Options</span>
-                      </div>
-                      
-                      <div className="stat">
-                        <span className="stat-icon">⏰</span>
-                        <span className="stat-value time-remaining">
-                          {timeRemaining.text}
-                        </span>
+                      <div className="result-stats">
+                        <span className="result-votes">{voteCount} votes</span>
+                        <span className="result-percentage">{percentage}%</span>
                       </div>
                     </div>
-                    
-                    {/* Location Info */}
-                    {poll.target_location && (
-                      <div className="poll-location">
-                        <span className="location-icon">📍</span>
-                        <span>
-                          {poll.target_location.level === 'national' ? 'National' :
-                           poll.target_location.level === 'county' ? poll.target_location.county_name :
-                           poll.target_location.level === 'constituency' ? poll.target_location.constituency_name :
-                           poll.target_location.level}
-                        </span>
-                      </div>
-                    )}
-                    
-                    {/* Vote Button */}
-                    <button className="vote-btn">
-                      {poll.has_voted ? '✓ Voted' : 'Vote Now →'}
-                    </button>
+                    <div className="result-bar-container">
+                      <div 
+                        className="result-bar"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
                   </div>
                 );
               })}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <div className="empty-icon">🗳️</div>
-              <h3>No polls found</h3>
-              <p>
-                {searchQuery
-                  ? `No polls match your search for "${searchQuery}"`
-                  : 'There are no polls matching your filters'}
-              </p>
-              <button onClick={() => {
-                setSearchQuery('');
-                setStatusFilter('all');
-                setPositionFilter('all');
-              }} className="reset-filters-btn">
-                Clear Filters
-              </button>
-            </div>
+          </div>
+          
+          {poll.total_votes === 0 && (
+            <p className="no-votes-yet">No votes yet. Be the first to vote!</p>
           )}
-        </>
+        </div>
       )}
     </div>
   );

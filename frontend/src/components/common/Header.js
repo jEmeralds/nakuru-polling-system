@@ -1,11 +1,16 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './Header.css';
 
 const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
+
+  // Pages where back button should NOT show
+  const hideBackButton = ['/', '/login', '/register', '/dashboard', '/admin/dashboard', '/admin'];
+  const showBackButton = user && !hideBackButton.includes(location.pathname);
 
   const handleIssuesClick = (e) => {
     e.preventDefault(); // Prevent any default behavior
@@ -29,12 +34,26 @@ const Header = () => {
     navigate('/');
   };
 
+  const handleBack = () => {
+    navigate(-1); // Go back in browser history
+  };
+
   return (
     <header className="header">
       <div className="header-container">
+        {/* Automatic Back Button */}
+        {showBackButton && (
+          <button 
+            className="header-back-button" 
+            onClick={handleBack}
+          >
+            ← Back
+          </button>
+        )}
+
         <div className="header-logo" onClick={() => navigate('/')}>
-          <h1>Nakuru Polls</h1>
-          <p>Your Voice, Our Future</p>
+          <h1>EMERALD POLLS</h1>
+          <p>YOUR VOICE, YOUR FUTURE</p>
         </div>
 
         <nav className="header-nav">
@@ -58,7 +77,7 @@ const Header = () => {
                   pointerEvents: 'auto'
                 }}
               >
-                📝 Issues (DEBUG)
+                📝 Issues
               </button>
 
               {(user.role === 'admin' || user.role === 'super_admin') && (

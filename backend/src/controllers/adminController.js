@@ -1,5 +1,5 @@
 // backend/src/controllers/adminController.js
-const { supabase } = require('../config/database');
+const supabase = require('../config/database');  // ✅ FIXED - No destructuring
 
 /**
  * Get admin dashboard statistics
@@ -339,6 +339,8 @@ exports.updateIssuePriority = async (req, res) => {
     if (error) throw error;
 
     console.log('✅ Issue priority updated to:', priority);
+    res.json({ success: true, issue: data });
+
     res.json({ success: true, issue: data });
 
   } catch (error) {

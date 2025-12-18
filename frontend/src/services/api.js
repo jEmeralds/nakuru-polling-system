@@ -9,6 +9,7 @@ const api = axios.create({
   }
 })
 
+// Request interceptor - Add token to every request
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
@@ -22,6 +23,23 @@ api.interceptors.request.use(
   }
 )
 
+// Response interceptor - Only logout on auth-specific 401s
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Only logout if it's an auth endpoint returning 401
+    // This prevents logout when other endpoints fail
+    if (error.response?.status === 401 && 
+        error.config?.url?.includes('/auth/')) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
+// Helper function to add comments
 export const addComment = async (issueId, commentText) => {
   try {
     const response = await api.post(`/issues/${issueId}/comments`, {
@@ -34,20 +52,8 @@ export const addComment = async (issueId, commentText) => {
   }
 };
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
-    }
-    return Promise.reject(error)
-  }
-)
-
+// Auth API endpoints
 export const authAPI = {
-  // Try standard endpoints first
   register: (userData) => api.post('/auth/register', userData),
   login: (credentials) => api.post('/auth/login', credentials),
   getProfile: () => api.get('/auth/profile'),
