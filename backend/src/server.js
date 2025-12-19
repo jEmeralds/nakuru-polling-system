@@ -26,6 +26,8 @@ app.use(cors({
   credentials: true
 }));
 
+// Add this line:
+console.log('🔒 CORS configured for:', process.env.FRONTEND_URL || 'http://localhost:3000');
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
