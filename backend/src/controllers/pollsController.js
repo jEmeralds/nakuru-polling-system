@@ -1,5 +1,5 @@
 // =====================================================
-// FIXED pollsController.js with proper vote counting
+// FIXED pollsController.js with proper vote counting AND DATE FILTERING
 // =====================================================
 
 const supabase = require('../config/database');
@@ -164,7 +164,7 @@ const createPoll = async (req, res) => {
 };
 
 /**
- * GET ALL POLLS
+ * GET ALL POLLS - WITH REAL-TIME DATE FILTERING ✅
  */
 const getAllPolls = async (req, res) => {
   try {
@@ -209,16 +209,41 @@ const getAllPolls = async (req, res) => {
       throw error;
     }
 
-    const formattedPolls = polls?.map(poll => ({
+    // ✅ FILTER BY ACTUAL DATES - Check if polls are truly active/closed RIGHT NOW
+    const now = new Date();
+    const filteredPolls = polls?.filter(poll => {
+      const startDate = new Date(poll.start_date);
+      const endDate = new Date(poll.end_date);
+
+      // For admins viewing drafts, show all
+      if (isAdmin && poll.status === 'draft') {
+        return true;
+      }
+
+      // For non-admins or when filtering by status
+      if (poll.status === 'active') {
+        // Only show if currently within date range
+        return now >= startDate && now <= endDate;
+      }
+
+      if (poll.status === 'closed') {
+        // Show closed polls (already ended)
+        return true;
+      }
+
+      return false;
+    }) || [];
+
+    const formattedPolls = filteredPolls.map(poll => ({
       ...poll,
       candidates: poll.poll_candidates?.map(pc => ({
         ...pc.candidates,
         display_order: pc.display_order,
         is_active: pc.is_active
       })) || []
-    })) || [];
+    }));
 
-    console.log(`✅ Retrieved ${formattedPolls.length} polls`);
+    console.log(`✅ Retrieved ${formattedPolls.length} polls (filtered by dates)`);
     res.json(formattedPolls);
 
   } catch (error) {
